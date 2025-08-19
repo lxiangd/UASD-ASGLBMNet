@@ -5,7 +5,6 @@
 UASD-ASGLBMNet/
 	train.py                  # 训练入口
 	test.py                   # 测试 / 推理脚本 (可自行扩展)
-	options.py                # 可能的参数辅助（如后续拓展）
 	config/                   # 配置文件
 		shipsear/ASGLBMNet.yaml
 		shipsear/convtasnet.yaml
@@ -14,9 +13,7 @@ UASD-ASGLBMNet/
 		convtasnet/convtasnet.py
 	utils/                    # 工具集合 (loss/metrics/logger/flops/...)
 	dataloader/               # 数据加载逻辑
-	loss/                     # （项目自带 loss 可扩展）
 	data/                     # 原始 clean / noise (你放这里)
-	generate_dummy_signals.py # 生成纯音测试数据
 	prepare_shipsear_dataset.py # 将 clean/noise 合成为多 SNR 训练集
 	requirements.txt
 	Readme.md
