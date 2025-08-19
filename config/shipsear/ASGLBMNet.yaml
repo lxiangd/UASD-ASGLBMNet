@@ -1,0 +1,112 @@
+# HTDemucs配置文件 - 专门用于水下音频去噪
+# 全局设置
+train:
+  batch_size: 16
+  epochs: 100
+  device: "cuda"  # 使用GPU训练
+  gpu_ids: 1  # 使用第1,2张GPU
+  early_stop_patience: 100  # 降低早停容忍度，防止过拟合
+   #### Optimizer settings
+  optimizer:
+        name: "AdamW" ### Choose a torch.optim's class(=attribute) e.g. ["Adam", "AdamW", "SGD", ...]
+        AdamW:
+            lr: 1.0e-3  # 降低学习率，提高训练稳定性
+            weight_decay: 1.0e-2  # 适当降低权重衰减
+  # ------------------------------------------------------------ #
+  scheduler:
+      name: "ReduceLROnPlateau" ### Choose a torch.optim.lr_scheduler's class(=attribute) e.g. ["StepLR", "ReduceLROnPlateau", "Custom"]
+      ReduceLROnPlateau:
+          mode: "min"
+          min_lr: 1.0e-10
+          factor: 0.8
+          patience: 2
+      WarmupConstantSchedule:
+          warmup_steps: 1000
+
+
+# 模型设置
+model:
+    arch: "ASGLBMNet"  # 使用ASGLBMNet
+    # 模型参数
+    num_stages: &var_model_num_stages 4 # R
+    num_spks: &var_model_num_spks 1
+    audio_enc:  # 合并 encoder 与 projector
+            layer1:
+                in_channels: 1
+                out_channels: &var_model_audio_enc_out_channels 256
+                kernel_size: &var_model_audio_enc_kernel_size 64 # L
+                stride: &var_model_audio_enc_stride 32 # S
+                groups: 1
+                bias: false
+            layer2:
+                num_channels: *var_model_audio_enc_out_channels 
+                in_channels: *var_model_audio_enc_out_channels
+                out_channels: &feature_projector_out_channels 128 # F
+                kernel_size: 1
+                bias: false
+    module_enc_dec:
+      num_stages: *var_model_num_stages
+      enc_stage:
+          glbm_conf:
+              in_channels: *feature_projector_out_channels
+              num_mha_heads: 8
+              kernel_size: 65
+              dropout_rate: 0.05
+          down_conv_layer:
+              in_channels: *feature_projector_out_channels
+              samp_kernel_size: &var_model_samp_kernel_size 5
+      middle_layer:
+          in_channels: *feature_projector_out_channels
+          num_spks: *var_model_num_spks
+      simple_fusion:
+          out_channels: *feature_projector_out_channels
+      dec_stage:
+          num_spks: *var_model_num_spks
+          glbm_conf:
+              in_channels: *feature_projector_out_channels
+              num_mha_heads: 8
+              kernel_size: 65
+              dropout_rate: 0.05
+    audio_dec:  # 合并 output_layer 与 audio_dec
+            layer1:
+                in_channels: *var_model_audio_enc_out_channels
+                out_channels: *feature_projector_out_channels
+                num_spks: *var_model_num_spks
+            layer2:
+                in_channels: *var_model_audio_enc_out_channels
+                out_channels: 1
+                kernel_size: *var_model_audio_enc_kernel_size
+                stride: *var_model_audio_enc_stride
+                bias: false
+      
+  # 损失函数
+    loss:
+        type: "sisnr" # 损失函数类型
+
+
+# 预训练设置
+pretrain:
+  enabled: false # 设置为true时自动加载best.pt
+  model_path: ""  # 可选：手动指定预训练模型路径，为空时自动使用best.pt
+
+
+
+# 数据集设置
+dataset:
+    name: "shipsear"
+    sampling_rate: 16000
+    chunk_size: 80000      
+    channels: 1            # 单通道
+    paths:
+        train: "data/data_format_16k/train"
+        valid: "data/data_format_16k/valid"
+        test: "data/data_format_16k/test"
+# 日志和模型保存设置
+output:
+  log_dir: "log"
+  model_dir: "models"
+  # SwanLab配置
+  swanlab:
+    project_name: "underwater_acoustic_denoising_shipsear"
+    run_name: null  # 自动生成运行名称
+    enabled: true 

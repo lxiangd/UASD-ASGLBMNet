@@ -1,0 +1,72 @@
+# HTDemucs配置文件 - 专门用于水下音频去噪
+# 全局设置
+train:
+  batch_size: 16
+  epochs: 100
+  device: "cuda"  # 使用GPU训练
+  gpu_ids: 1  # 使用第1,2张GPU
+  early_stop_patience: 100  # 早停容忍度，连续多少个epoch未提升即停止
+   #### Optimizer settings
+  optimizer:
+        name: "AdamW" ### Choose a torch.optim's class(=attribute) e.g. ["Adam", "AdamW", "SGD", ...]
+        AdamW:
+            lr: 3.0e-4  # 降低学习率，提高训练稳定性
+            weight_decay: 1.0e-3  # 适当降低权重衰减
+  # ------------------------------------------------------------ #
+  scheduler:
+      name: "ReduceLROnPlateau" ### Choose a torch.optim.lr_scheduler's class(=attribute) e.g. ["StepLR", "ReduceLROnPlateau", "Custom"]
+      ReduceLROnPlateau:
+          mode: "min"
+          min_lr: 1.0e-10
+          factor: 0.8
+          patience: 2
+      WarmupConstantSchedule:
+          warmup_steps: 1000
+  
+
+
+# 模型设置
+model:
+    arch: "CONVTASNET"
+    CONVTASNET:  # 使用Sepreformer
+        N: 512
+        L: 64
+        B: 128
+        H: 512
+        P: 3
+        X: 8
+        R: 3
+        norm: gln
+        num_spks: 1
+        activate: relu
+        causal: false
+  
+  # 损失函数
+    loss:
+        type: "sisnr"
+
+# 预训练设置
+pretrain:
+  enabled: true
+  model_path: ''
+
+
+# 数据集设置
+dataset:
+    name: "shipsear"
+    sampling_rate: 16000
+    chunk_size: 80000      
+    channels: 1            # 单通道
+       
+    paths:
+        train: "data/data_format_16k/train"
+        valid: "data/data_format_16k/valid"
+        test: "data/data_format_16k/test"
+output:
+  log_dir: "log"
+  model_dir: "models"
+  # SwanLab配置
+  swanlab:
+    project_name: "underwater_acoustic_denoising_shipsear"
+    run_name: null  # 自动生成运行名称
+    enabled: true 
