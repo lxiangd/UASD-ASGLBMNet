@@ -1,24 +1,4 @@
 
-## 📂 目录结构
-
-```
-UASD-ASGLBMNet/
-	train.py                  # 训练入口
-	test.py                   # 测试 / 推理脚本 (可自行扩展)
-	config/                   # 配置文件
-		shipsear/ASGLBMNet.yaml
-		shipsear/convtasnet.yaml
-	models/                   # 模型实现与注册 (@register_model)
-		ASGLBMNet/ASGLBMNet.py
-		convtasnet/convtasnet.py
-	utils/                    # 工具集合 (loss/metrics/logger/flops/...)
-	dataloader/               # 数据加载逻辑
-	data/                     # 原始 clean / noise (你放这里)
-	prepare_shipsear_dataset.py # 将 clean/noise 合成为多 SNR 训练集
-	requirements.txt
-	Readme.md
-```
-
 ## 🚀 快速开始
 
 ### 1. 创建环境
@@ -114,7 +94,7 @@ model:
 
 
 ### 切换已有损失
-支持: `l1`, `l2`, `sisnr` (PIT_SISNR_time)，以及你自行注册的。
+支持: `l1`, `l2`, `sisnr` (PIT_SISNR_time)
 
 
 
